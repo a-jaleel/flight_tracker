@@ -146,7 +146,13 @@ export const DEFAULT_CONFIG: Config = {
   locationName: "Bronx, NY",
   // Wide enough to keep LGA (~5.4 mi away) and its arrivals/departures on screen.
   radiusMiles: 7,
-  locationProfiles: [],
+  // Tap a chip in the control panel's Location section to jump between the three
+  // nearby airports (each centered on the field with ~5 mi of approach traffic).
+  locationProfiles: [
+    { id: "lga", name: "LaGuardia (LGA)", lat: 40.7769, lon: -73.874, radiusMiles: 5 },
+    { id: "jfk", name: "JFK", lat: 40.6413, lon: -73.7781, radiusMiles: 5 },
+    { id: "ewr", name: "Newark (EWR)", lat: 40.6895, lon: -74.1745, radiusMiles: 5 },
+  ],
 
   // Wall-mounted, front-viewed screen: north-up, no mirroring by default.
   rotationDeg: 0,
