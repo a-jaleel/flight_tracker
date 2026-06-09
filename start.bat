@@ -6,6 +6,9 @@ REM ============================================================
 setlocal
 cd /d "%~dp0"
 
+REM Don't let corepack stop to ask permission to download pnpm.
+set COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
 echo(
 echo ==================================================
 echo    Flight Tracker - starting up
@@ -22,19 +25,47 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+for /f "delims=" %%v in ('node --version') do echo Using Node %%v
 
-REM --- Enable pnpm (ships with Node via corepack) ---
-call corepack enable >nul 2>nul
+REM --- Make sure pnpm is available (via corepack, with fallbacks) ---
+call corepack enable
+call corepack prepare pnpm@10.28.2 --activate
 
-REM --- Install dependencies (fast if already installed) ---
-echo Installing dependencies (the first run can take a few minutes)...
-call pnpm install
+where pnpm >nul 2>nul
+if errorlevel 1 (
+  echo pnpm not on PATH yet - installing it globally as a fallback...
+  call npm install -g pnpm
+)
+
+where pnpm >nul 2>nul
 if errorlevel 1 (
   echo(
-  echo [ERROR] "pnpm install" failed - see the messages above.
+  echo [ERROR] Could not set up pnpm.
+  echo Try running this command once in an ADMINISTRATOR Command Prompt:
+  echo     corepack enable
+  echo then double-click this file again.
+  echo(
   pause
   exit /b 1
 )
+for /f "delims=" %%v in ('pnpm --version') do echo Using pnpm %%v
+
+REM --- Install dependencies, logging everything to install-log.txt ---
+echo(
+echo Installing dependencies (the first run can take a few minutes)...
+call pnpm install > install-log.txt 2>&1
+if errorlevel 1 (
+  echo(
+  echo [ERROR] "pnpm install" failed.
+  echo The full output was saved to:  %cd%\install-log.txt
+  echo Please share that file. Last lines:
+  echo --------------------------------------------------
+  powershell -NoProfile -Command "Get-Content install-log.txt -Tail 25"
+  echo --------------------------------------------------
+  pause
+  exit /b 1
+)
+echo Dependencies installed.
 
 echo(
 echo ==================================================
