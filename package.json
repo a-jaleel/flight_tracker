@@ -1,0 +1,28 @@
+{
+  "name": "flight_tracker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Flight Tracker — show the aircraft passing overhead in real time on a wall-mounted screen, from a free cloud ADS-B API.",
+  "type": "module",
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "dev": "concurrently -n server,web -c green,cyan \"pnpm dev:server\" \"pnpm dev:web\"",
+    "dev:server": "pnpm -F server dev",
+    "dev:web": "pnpm -F web dev",
+    "build": "pnpm -F web build",
+    "bundle:server": "node scripts/bundle-server.mjs",
+    "start": "pnpm -F server start",
+    "test": "vitest run",
+    "typecheck": "tsc -p shared/tsconfig.json && pnpm -F server typecheck && pnpm -F web typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "esbuild": "^0.25.0",
+    "playwright": "^1.60.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

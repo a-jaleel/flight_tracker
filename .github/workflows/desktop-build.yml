@@ -1,0 +1,96 @@
+name: Build desktop apps
+
+# Builds the macOS (.dmg/.zip) and Windows (.exe) desktop apps on GitHub's
+# runners and publishes them to a downloadable GitHub Release.
+# Triggers: pushing a version tag (v*), or running it manually from the Actions
+# tab / API (workflow_dispatch) with a tag name to publish.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Tag/version to publish (e.g. v0.1.0)"
+        required: true
+        default: "v0.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install project dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web UI
+        run: pnpm build
+
+      - name: Bundle standalone server
+        run: pnpm bundle:server
+
+      - name: Install desktop (Electron) dependencies
+        working-directory: desktop
+        run: npm install
+
+      - name: Build installer
+        working-directory: desktop
+        env:
+          # Unsigned build — don't try to discover a macOS signing identity.
+          CSC_IDENTITY_AUTODISCOVERY: "false"
+        run: npx electron-builder --publish never
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.os }}
+          path: |
+            desktop/release/*.dmg
+            desktop/release/*.zip
+            desktop/release/*.exe
+            desktop/release/*.AppImage
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all installers
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+          pattern: installers-*
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          name: Flight Tracker ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          body: |
+            One-click desktop builds of Flight Tracker.
+
+            - **macOS:** download the `.dmg`, open it, drag the app to Applications.
+            - **Windows:** download and run the `.exe` installer (or the portable `.exe`).
+
+            These builds are **unsigned**, so the first launch shows a one-time prompt:
+            macOS → right-click the app → **Open**; Windows → **More info → Run anyway**.
+          files: dist-artifacts/**
