@@ -1,6 +1,6 @@
 {
   "name": "flight_tracker",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Flight Tracker — show the aircraft passing overhead in real time on a wall-mounted screen, from a free cloud ADS-B API.",
   "type": "module",

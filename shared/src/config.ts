@@ -11,6 +11,10 @@ export type DataSource = "api";
 export type SpeedUnit = "kt" | "mph" | "kmh";
 /** map = flat ground plan; sky = look-up dome with altitude-aware motion. */
 export type ProjectionMode = "map" | "sky";
+/** Backdrop behind the aircraft: the night-sky layer, or a real ground map. */
+export type Backdrop = "sky" | "map";
+/** Tile style for the ground-map backdrop. */
+export type MapType = "satellite" | "streets";
 
 export interface Palette {
   bg: string;
@@ -71,6 +75,13 @@ export interface Config {
   labelRotationDeg: number;
   /** How aircraft are placed (map = flat top-down plan; sky = look-up dome). */
   projectionMode: ProjectionMode;
+
+  // --- backdrop ---
+  /** "sky" = night-sky layer; "map" = real ground/terrain map under the planes
+   *  (forces a flat top-down view). */
+  backdrop: Backdrop;
+  /** Ground-map tile style when backdrop = "map". */
+  mapType: MapType;
 
   // --- filtering ---
   minAltitudeFt: number;
@@ -159,6 +170,10 @@ export const DEFAULT_CONFIG: Config = {
   mirrorX: false,
   mirrorY: false,
   labelRotationDeg: 0,
+
+  // Night-sky backdrop by default; switch to "map" for a ground/terrain view.
+  backdrop: "sky",
+  mapType: "satellite",
   // Default to the flat ground plan (the original look); "sky" is opt-in.
   projectionMode: "map",
 

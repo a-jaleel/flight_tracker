@@ -223,10 +223,10 @@ export function Control() {
               onChange={(v) => set({ labelRotationDeg: v })} />
           </Row>
           <Row label="Radius">
-            <Slider value={cfg.radiusMiles} min={0.5} max={10} step={0.5} unit="mi"
+            <Slider value={cfg.radiusMiles} min={0.5} max={150} step={0.5} unit="mi"
               onChange={(v) => set({ radiusMiles: v })} />
           </Row>
-          <Row label="Projection" hint="sky = realistic look-up motion">
+          <Row label="Projection" hint={cfg.backdrop === "map" ? "flat in map mode" : "sky = look-up motion"}>
             <Segmented
               value={cfg.projectionMode}
               options={[
@@ -236,6 +236,31 @@ export function Control() {
               onChange={(v) => set({ projectionMode: v })}
             />
           </Row>
+        </Section>
+
+        <Section title="Backdrop">
+          <Row label="Behind aircraft" hint="sky stars or a ground map">
+            <Segmented
+              value={cfg.backdrop}
+              options={[
+                { value: "sky", label: "Sky" },
+                { value: "map", label: "Ground map" },
+              ]}
+              onChange={(v) => set({ backdrop: v })}
+            />
+          </Row>
+          {cfg.backdrop === "map" && (
+            <Row label="Map style" hint="satellite or streets">
+              <Segmented
+                value={cfg.mapType}
+                options={[
+                  { value: "satellite", label: "Satellite" },
+                  { value: "streets", label: "Streets" },
+                ]}
+                onChange={(v) => set({ mapType: v })}
+              />
+            </Row>
+          )}
         </Section>
 
         <Section title="View">

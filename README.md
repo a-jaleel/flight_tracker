@@ -48,6 +48,9 @@ inherited from Skylight.
 - **Live sky layer** — sun, moon (with phase), bright stars + constellation lines,
   **naked-eye planets**, and **satellites / ISS** computed from TLEs. Scrub time
   forward/back from your phone, or jump straight to the next ISS pass.
+- **Ground-map backdrop** — flip the **Backdrop** toggle from *Sky* to *Ground map* for
+  a Google-Earth-style **satellite** (or **streets**) view under the planes, aligned to
+  the real runways and traffic. Radius is adjustable up to 150 mi for a wide-area view.
 - **Phone control panel** — every setting (location, orientation, theme, palette,
   filters, sky toggles, …) is live-tunable over your LAN and persists across reboots.
 - **Appliance-ready** — boots straight to a full-screen kiosk on a Raspberry Pi.
@@ -103,9 +106,11 @@ a launcher (it sets up `pnpm`, installs deps, and starts the app):
 | **Browser** (opens your default browser) | `start.bat` | `start.command` |
 | **Desktop app** (native window) | `desktop.bat` | `desktop.command` |
 
-The desktop app is an [Electron](https://www.electronjs.org/) wrapper that runs the
-server on loopback and opens the display in its own window (the **View** menu opens the
-control panel) — see [`desktop/README.md`](desktop/README.md).
+The desktop app is an [Electron](https://www.electronjs.org/) wrapper that opens the
+display in its own window (the **View** menu — or `Ctrl/Cmd+2` — opens the control
+panel). It serves on your LAN, so you can also open
+`http://<this-pc-ip>:38473/control.html` on your **phone** to tune it. See
+[`desktop/README.md`](desktop/README.md).
 
 ## Raspberry Pi appliance
 

@@ -138,6 +138,10 @@ export class Renderer {
   private skyComputedAt = 0;
   private skyOffsetUsed = NaN;
 
+  // Ground-map (tile) backdrop state. Tiles load async; the RAF loop redraws
+  // every frame so loaded tiles appear automatically.
+  private tiles = new Map<string, HTMLImageElement>();
+
   constructor(
     private canvas: HTMLCanvasElement,
     private getConfig: () => Config,
@@ -280,6 +284,11 @@ export class Renderer {
     return tr.ac.track ?? tr.history[tr.history.length - 1]?.track;
   }
 
+  /** Effective projection: the ground-map backdrop forces a flat top-down view. */
+  private projMode(cfg: Config): Config["projectionMode"] {
+    return cfg.backdrop === "map" ? "map" : cfg.projectionMode;
+  }
+
   private toPoint(
     sample: GroundSample,
     cfg: Config,
@@ -288,7 +297,7 @@ export class Renderer {
   ): Point {
     return projectAircraft(
       sample,
-      cfg.projectionMode,
+      this.projMode(cfg),
       proj,
       this.horizonM(cfg),
       tr ? this.fallbackAz(tr) : undefined,
@@ -320,8 +329,12 @@ export class Renderer {
       screenH: this.h,
     };
 
-    this.updateSky(cfg, now);
-    this.drawSky(cfg, proj);
+    if (cfg.backdrop === "map") {
+      this.drawMap(cfg, proj);
+    } else {
+      this.updateSky(cfg, now);
+      this.drawSky(cfg, proj);
+    }
     this.drawOverlays(cfg, proj);
     if (cfg.showAirport) this.drawAirport(cfg, proj);
 
@@ -349,22 +362,21 @@ export class Renderer {
       const rangeMi = metersToMiles(rangeMeters(sample.m));
       if (rangeMi > cfg.radiusMiles * 1.08) continue;
 
-      const sky =
-        cfg.projectionMode === "sky"
-          ? groundToSkyAngles(sample.m, sample.altFt, this.fallbackAz(tr))
-          : null;
+      const skyMode = this.projMode(cfg) === "sky";
+      const sky = skyMode
+        ? groundToSkyAngles(sample.m, sample.altFt, this.fallbackAz(tr))
+        : null;
       const p = this.toPoint(sample, cfg, proj, tr);
       const heading = this.screenHeading(tr, tt, cfg, proj);
       const edgeFade =
-        cfg.projectionMode === "sky" && sky
+        skyMode && sky
           ? clamp01(sky.elev / 6) * clamp01((cfg.radiusMiles - rangeMi) / (cfg.radiusMiles * 0.14))
           : clamp01((cfg.radiusMiles - rangeMi) / (cfg.radiusMiles * 0.14));
       const alpha = clamp01(edgeFade) * tr.life * cfg.brightness;
       const alt = sample.altFt;
       const color = cfg.altitudeColor ? altRamp(alt) : hexToRgb(cfg.palette.glyph);
       const emergency = cfg.highlightEmergency && !!tr.ac.squawk && EMERGENCY_SQUAWKS.has(tr.ac.squawk);
-      const sizeScale =
-        cfg.projectionMode === "sky" && sky ? skyGlyphScale(sky.slantM) : 1;
+      const sizeScale = skyMode && sky ? skyGlyphScale(sky.slantM) : 1;
 
       visible.push({ tr, sample, sky, p, heading, rangeMi, alpha, color, emergency, sizeScale });
     }
@@ -428,7 +440,7 @@ export class Renderer {
     const cx = this.w / 2;
     const cy = this.h / 2;
     const hM = this.horizonM(cfg);
-    const skyMode = cfg.projectionMode === "sky";
+    const skyMode = this.projMode(cfg) === "sky";
 
     if (cfg.rangeRings) {
       ctx.save();
@@ -600,6 +612,100 @@ export class Renderer {
   /** Place an (azimuth, altitude) sky point on the field. Zenith=center, horizon=edge. */
   private projectSky(az: number, alt: number, cfg: Config, proj: ProjOpts): Point {
     return projectSkyPoint(az, alt, proj, this.horizonM(cfg));
+  }
+
+  /**
+   * Ground-map backdrop: Web-Mercator raster tiles drawn under the aircraft.
+   * Each tile's geographic corners are projected with the SAME flat projection
+   * the aircraft use (an affine map), so imagery and traffic stay aligned at any
+   * rotation / radius. Tiles load async and pop in as the RAF loop redraws.
+   */
+  private drawMap(cfg: Config, proj: ProjOpts): void {
+    const ctx = this.ctx;
+    const lat0 = cfg.centerLat;
+    const lon0 = cfg.centerLon;
+    const pxPerM = proj.pxPerM;
+    if (!isFinite(pxPerM) || pxPerM <= 0) return;
+
+    // Half-extent in meters covering the screen diagonal (so a rotated view is
+    // still fully covered).
+    const halfDiagM = Math.hypot(this.w, this.h) / 2 / pxPerM;
+    const dLat = halfDiagM / 110540;
+    const dLon = halfDiagM / (Math.cos(lat0 * DEG) * 111320);
+    const latMax = Math.min(85.05, lat0 + dLat);
+    const latMin = Math.max(-85.05, lat0 - dLat);
+
+    // Pick a tile zoom so tile resolution ~ screen resolution at the center.
+    const mPerPx = 1 / pxPerM;
+    const z = Math.max(
+      2,
+      Math.min(19, Math.round(Math.log2((156543.034 * Math.cos(lat0 * DEG)) / mPerPx))),
+    );
+    const n = 2 ** z;
+
+    const lon2x = (lon: number) => ((lon + 180) / 360) * n;
+    const lat2y = (lat: number) => {
+      const r = lat * DEG;
+      return ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n;
+    };
+    const x2lon = (x: number) => (x / n) * 360 - 180;
+    const y2lat = (y: number) =>
+      (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI;
+
+    const xMin = Math.floor(lon2x(lon0 - dLon));
+    const xMax = Math.floor(lon2x(lon0 + dLon));
+    const yMin = Math.max(0, Math.floor(lat2y(latMax))); // north
+    const yMax = Math.min(n - 1, Math.floor(lat2y(latMin))); // south
+    if ((xMax - xMin + 1) * (yMax - yMin + 1) > 400) return; // runaway guard
+
+    ctx.imageSmoothingEnabled = true;
+    for (let x = xMin; x <= xMax; x++) {
+      const xi = ((x % n) + n) % n; // wrap longitude index
+      const lonW = x2lon(x);
+      const lonE = x2lon(x + 1);
+      for (let y = yMin; y <= yMax; y++) {
+        const img = this.getTile(cfg.mapType, z, xi, y);
+        if (!img.complete || img.naturalWidth === 0) continue;
+        const latN = y2lat(y);
+        const latS = y2lat(y + 1);
+        const pNW = project(llToMeters(latN, lonW, lat0, lon0), proj);
+        const pNE = project(llToMeters(latN, lonE, lat0, lon0), proj);
+        const pSW = project(llToMeters(latS, lonW, lat0, lon0), proj);
+        // Affine mapping tile-pixel space (0..256) -> screen via 3 corners.
+        const a = (pNE.x - pNW.x) / 256;
+        const b = (pNE.y - pNW.y) / 256;
+        const c = (pSW.x - pNW.x) / 256;
+        const d = (pSW.y - pNW.y) / 256;
+        ctx.save();
+        ctx.transform(a, b, c, d, pNW.x, pNW.y);
+        ctx.drawImage(img, -0.5, -0.5, 257, 257); // tiny bleed hides seams
+        ctx.restore();
+      }
+    }
+
+    // Slight scrim so the luminous glyphs/labels stay readable over imagery.
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.fillRect(0, 0, this.w, this.h);
+  }
+
+  private getTile(
+    type: Config["mapType"],
+    z: number,
+    x: number,
+    y: number,
+  ): HTMLImageElement {
+    const key = `${type}/${z}/${x}/${y}`;
+    const existing = this.tiles.get(key);
+    if (existing) return existing;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = tileUrl(type, z, x, y);
+    this.tiles.set(key, img);
+    if (this.tiles.size > 600) {
+      const oldest = this.tiles.keys().next().value;
+      if (oldest !== undefined) this.tiles.delete(oldest);
+    }
+    return img;
   }
 
   private drawSky(cfg: Config, proj: ProjOpts): void {
@@ -781,7 +887,7 @@ export class Renderer {
     const destAz = bearing(ac.lat, ac.lon, ac.destLat, ac.destLon);
     const pts: Point[] = [v.p];
 
-    if (cfg.projectionMode === "sky" && v.sky) {
+    if (this.projMode(cfg) === "sky" && v.sky) {
       // Curve along the dome from the aircraft's sky position toward the
       // destination azimuth at the horizon — a realistic look-up great-circle hint.
       const steps = 10;
@@ -1121,6 +1227,16 @@ function hexSeed(hex: string): number {
 }
 
 const DEG = Math.PI / 180;
+
+/**
+ * Esri (ArcGIS) raster basemap tile URL — free, no API key. "satellite" =
+ * World Imagery (Google-Earth-like), "streets" = World Street Map. Esri tiles
+ * are addressed /{z}/{row=y}/{col=x}.
+ */
+function tileUrl(type: "satellite" | "streets", z: number, x: number, y: number): string {
+  const service = type === "streets" ? "World_Street_Map" : "World_Imagery";
+  return `https://server.arcgisonline.com/ArcGIS/rest/services/${service}/MapServer/tile/${z}/${y}/${x}`;
+}
 
 /** Initial great-circle bearing (deg from North) from point 1 to point 2. */
 function bearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
