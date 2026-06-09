@@ -80,25 +80,32 @@ Set your location from the control panel's **Location** section (type a city, ai
 code, or `lat,lon`), or edit the defaults in
 [`shared/src/config.ts`](shared/src/config.ts).
 
-## One-click launchers & desktop app
+## Desktop app (one-click, nothing to install)
 
-If you'd rather not use the terminal, double-clickable launchers are included for both
-the browser experience and a native desktop window:
+Download a packaged installer from the
+[**Releases**](https://github.com/a-jaleel/flight_tracker/releases) page — `.dmg` for
+macOS, `.exe` for Windows. These **bundle Node, the server, and the UI**, so there's no
+Node install and no terminal: double-click to run. (Built automatically on real
+macOS/Windows runners by the `Build desktop apps` GitHub Actions workflow when a `v*`
+tag is pushed.)
+
+> The build is **unsigned**, so the first launch shows a one-time OS prompt: macOS →
+> right-click the app → **Open**; Windows → **More info → Run anyway**. After that it's a
+> normal one-click app.
+
+### Or launch from source
+
+If you have [Node.js](https://nodejs.org) and prefer running from the repo, double-click
+a launcher (it sets up `pnpm`, installs deps, and starts the app):
 
 | | Windows | macOS / Linux |
 |---|---|---|
 | **Browser** (opens your default browser) | `start.bat` | `start.command` |
-| **Desktop app** (native window, no browser) | `desktop.bat` | `desktop.command` |
+| **Desktop app** (native window) | `desktop.bat` | `desktop.command` |
 
-Each launcher checks for Node.js, sets up `pnpm`, installs dependencies, and starts the
-app. The **desktop app** is an [Electron](https://www.electronjs.org/) wrapper that runs
-the server on loopback and opens the display in its own window (the **View** menu opens
-the control panel too) — see [`desktop/README.md`](desktop/README.md).
-
-> First run on Windows may show a SmartScreen warning for the `.bat` (it's unsigned) —
-> **More info → Run anyway**. On macOS, if a `.command` is blocked, right-click it →
-> **Open**, or run `chmod +x *.command` once. You still need
-> [Node.js](https://nodejs.org) installed.
+The desktop app is an [Electron](https://www.electronjs.org/) wrapper that runs the
+server on loopback and opens the display in its own window (the **View** menu opens the
+control panel) — see [`desktop/README.md`](desktop/README.md).
 
 ## Raspberry Pi appliance
 

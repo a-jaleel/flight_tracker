@@ -7,6 +7,22 @@ open the **Control Panel** in its own window.
 
 Works on **Windows, macOS, and Linux**.
 
+## Download a ready-built app (no Node required)
+
+The easiest path: grab a packaged installer from the repo's
+[**Releases**](https://github.com/a-jaleel/flight_tracker/releases) — `.dmg` for macOS,
+`.exe` for Windows. These bundle Node, the server, and the UI, so there's nothing to
+install and no terminal. Double-click to run.
+
+> First launch on an **unsigned** build shows a one-time OS prompt: on macOS right-click
+> the app → **Open**; on Windows click **More info → Run anyway**. After that it's a
+> normal one-click app.
+
+Releases are produced automatically by the `Build desktop apps` GitHub Actions workflow
+when a `v*` tag is pushed (it builds on real macOS + Windows runners).
+
+## Run / build from source
+
 ## Easiest way to launch
 
 From the repo root, use the one-click launcher for your OS — it installs

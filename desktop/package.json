@@ -2,13 +2,50 @@
   "name": "flight-tracker-desktop",
   "private": true,
   "version": "0.1.0",
-  "description": "Electron desktop wrapper for Flight Tracker (Windows / macOS / Linux).",
+  "description": "Electron desktop app for Flight Tracker (Windows / macOS / Linux).",
+  "author": "a-jaleel",
   "type": "module",
   "main": "main.mjs",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder"
   },
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.ajaleel.flighttracker",
+    "productName": "Flight Tracker",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.mjs",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "../web/dist", "to": "web/dist" },
+      { "from": "server-bundle.mjs", "to": "server-bundle.mjs" }
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    }
   }
 }

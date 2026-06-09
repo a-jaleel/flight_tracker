@@ -10,18 +10,38 @@
 
 import { app, BrowserWindow, Menu } from "electron";
 import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { dirname, resolve, join } from "node:path";
 import http from "node:http";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
-const PORT = process.env.PORT || "3000";
+const PORT = process.env.PORT || "38473";
 const BASE = `http://127.0.0.1:${PORT}`;
 
 let serverProc = null;
 
-function startServer() {
+// Two ways to run the backend:
+//  - Packaged app: the server is pre-bundled (server-bundle.mjs) and the web UI
+//    is in resources/. We run the bundle IN-PROCESS with plain Node (no pnpm,
+//    no tsx, no node_modules) and point it at a writable data dir.
+//  - From source (dev / launcher scripts): spawn `pnpm -F server start`.
+async function startServer() {
+  if (app.isPackaged) {
+    process.env.PORT = PORT;
+    process.env.HOST = "127.0.0.1";
+    process.env.NODE_ENV = "production";
+    process.env.FT_WEB_DIST = join(process.resourcesPath, "web", "dist");
+    process.env.FT_DATA_DIR = app.getPath("userData");
+    const bundle = join(process.resourcesPath, "server-bundle.mjs");
+    try {
+      await import(pathToFileURL(bundle).href); // boots + listens
+    } catch (err) {
+      console.error("[desktop] could not start bundled server:", err);
+    }
+    return;
+  }
+
   const isWin = process.platform === "win32";
   serverProc = spawn(isWin ? "pnpm.cmd" : "pnpm", ["-F", "server", "start"], {
     cwd: ROOT,
@@ -108,7 +128,7 @@ function buildMenu() {
 
 app.whenReady().then(async () => {
   buildMenu();
-  startServer();
+  await startServer();
   const ok = await waitForHealth();
   const win = createWindow("/");
   if (!ok) showStartupError(win);

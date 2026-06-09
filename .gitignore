@@ -3,6 +3,11 @@ dist/
 *.log
 install-log.txt
 
+# desktop app build outputs
+desktop/server-bundle.mjs
+desktop/release/
+desktop/package-lock.json
+
 # runtime state (persisted config, route + TLE caches)
 server/data/
 data/

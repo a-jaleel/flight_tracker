@@ -17,8 +17,15 @@ import { resolveLocation } from "./geocode.js";
 import { buildHostMatcher, originHostname } from "./allowed-hosts.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = resolve(__dirname, "../data");
-const WEB_DIST = resolve(__dirname, "../../web/dist");
+// FT_DATA_DIR / FT_WEB_DIST let a packaged build (e.g. the Electron desktop app)
+// point at a writable data dir and the bundled web assets; default to the repo
+// layout for normal `pnpm start` / dev use.
+const DATA_DIR = process.env.FT_DATA_DIR
+  ? resolve(process.env.FT_DATA_DIR)
+  : resolve(__dirname, "../data");
+const WEB_DIST = process.env.FT_WEB_DIST
+  ? resolve(process.env.FT_WEB_DIST)
+  : resolve(__dirname, "../../web/dist");
 
 const PORT = Number(process.env.PORT ?? 3000);
 const HOST = process.env.HOST ?? "0.0.0.0";
