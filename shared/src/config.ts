@@ -139,12 +139,13 @@ export interface Config {
 }
 
 export const DEFAULT_CONFIG: Config = {
-  // Default center: San Francisco International (SFO). Set this to your own
-  // location — the spot you want centered on the screen.
-  centerLat: 37.6213,
-  centerLon: -122.379,
-  locationName: "San Francisco International",
-  radiusMiles: 3,
+  // Default center: home in the Bronx, NY (nearest airport: LaGuardia / LGA,
+  // ~5.4 mi SSW). Set this to your own location — the spot centered on screen.
+  centerLat: 40.852387,
+  centerLon: -73.844079,
+  locationName: "Bronx, NY",
+  // Wide enough to keep LGA (~5.4 mi away) and its arrivals/departures on screen.
+  radiusMiles: 7,
   locationProfiles: [],
 
   // Wall-mounted, front-viewed screen: north-up, no mirroring by default.

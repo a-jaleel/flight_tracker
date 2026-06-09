@@ -1,5 +1,5 @@
 // Bundled airport geometry, drawn at true geographic position so departures and
-// arrivals visibly line up with the runways. Coordinates from OurAirports (KSFO).
+// arrivals visibly line up with the runways. Coordinates from OurAirports (KLGA).
 
 export interface Runway {
   leIdent: string;
@@ -15,16 +15,15 @@ export interface Airport {
   runways: Runway[];
 }
 
-export const SFO: Airport = {
-  icao: "KSFO",
-  name: "SFO",
+// LaGuardia (KLGA) — two intersecting runways, 4/22 and 13/31.
+export const LGA: Airport = {
+  icao: "KLGA",
+  name: "LGA",
   runways: [
-    { leIdent: "10L", heIdent: "28R", le: [37.628742, -122.39341], he: [37.613538, -122.35716], widthFt: 200 },
-    { leIdent: "10R", heIdent: "28L", le: [37.626298, -122.393124], he: [37.61172, -122.358367], widthFt: 200 },
-    { leIdent: "1L", heIdent: "19R", le: [37.607898, -122.38295], he: [37.626476, -122.37063], widthFt: 200 },
-    { leIdent: "1R", heIdent: "19L", le: [37.606333, -122.381061], he: [37.627346, -122.367124], widthFt: 200 },
+    { leIdent: "4", heIdent: "22", le: [40.778294, -73.886241], he: [40.789258, -73.872684], widthFt: 150 },
+    { leIdent: "13", heIdent: "31", le: [40.785889, -73.889561], he: [40.772678, -73.875611], widthFt: 150 },
   ],
 };
 
-/** Airports drawn on the map (currently just SFO; easy to extend). */
-export const AIRPORTS: Airport[] = [SFO];
+/** Airports drawn on the map (currently just LGA; easy to extend). */
+export const AIRPORTS: Airport[] = [LGA];

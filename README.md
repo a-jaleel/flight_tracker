@@ -16,8 +16,8 @@ This is a fork of the excellent [**Skylight**](https://github.com/cpaczek/skylig
 screen** instead of a ceiling projector, using **online/cloud flight data** instead of a
 local radio, and trimmed down so it runs on the lightest practical Raspberry Pi.
 
-> The reference location is **San Francisco International (SFO)**, but it works anywhere —
-> set your coordinates from the control panel and you're flying.
+> The default location is **the Bronx, NY** (nearest airport: **LaGuardia / LGA**), but it
+> works anywhere — set your coordinates from the control panel and you're flying.
 
 ## What's different from Skylight
 
@@ -124,9 +124,9 @@ fields:
 | `skyTimeOffsetMin` | Scrub the sky clock for testing (0 = live). |
 | `showDestArc` / `showRouteDetail` | "Window to elsewhere". |
 
-**Using it somewhere other than SFO:** set your location from the control panel's
+**Using it somewhere other than the default:** set your location from the control panel's
 **Location** section (or edit `centerLat`/`centerLon`). Stars, sun, moon, and satellites
-are computed for your coordinates automatically. The runway overlay is still SFO-specific
+are computed for your coordinates automatically. The runway overlay ships with **LGA**
 geometry — turn off **Airport runways** if you've moved, or replace it in
 [`web/src/display/airports.ts`](web/src/display/airports.ts) with your local airport
 (coordinates from [OurAirports](https://ourairports.com/data/)).
