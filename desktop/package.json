@@ -1,0 +1,14 @@
+{
+  "name": "flight-tracker-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Electron desktop wrapper for Flight Tracker (Windows / macOS / Linux).",
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

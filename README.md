@@ -80,6 +80,26 @@ Set your location from the control panel's **Location** section (type a city, ai
 code, or `lat,lon`), or edit the defaults in
 [`shared/src/config.ts`](shared/src/config.ts).
 
+## One-click launchers & desktop app
+
+If you'd rather not use the terminal, double-clickable launchers are included for both
+the browser experience and a native desktop window:
+
+| | Windows | macOS / Linux |
+|---|---|---|
+| **Browser** (opens your default browser) | `start.bat` | `start.command` |
+| **Desktop app** (native window, no browser) | `desktop.bat` | `desktop.command` |
+
+Each launcher checks for Node.js, sets up `pnpm`, installs dependencies, and starts the
+app. The **desktop app** is an [Electron](https://www.electronjs.org/) wrapper that runs
+the server on loopback and opens the display in its own window (the **View** menu opens
+the control panel too) — see [`desktop/README.md`](desktop/README.md).
+
+> First run on Windows may show a SmartScreen warning for the `.bat` (it's unsigned) —
+> **More info → Run anyway**. On macOS, if a `.command` is blocked, right-click it →
+> **Open**, or run `chmod +x *.command` once. You still need
+> [Node.js](https://nodejs.org) installed.
+
 ## Raspberry Pi appliance
 
 Full walkthrough in [`pi-setup/README.md`](pi-setup/README.md): flash + headless
