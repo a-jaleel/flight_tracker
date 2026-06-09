@@ -29,7 +29,10 @@ let serverProc = null;
 async function startServer() {
   if (app.isPackaged) {
     process.env.PORT = PORT;
-    process.env.HOST = "127.0.0.1";
+    // Bind all interfaces so the phone control panel works over the LAN
+    // (http://<this-pc-ip>:PORT/control.html). The server's host allowlist
+    // still gates who may connect (loopback + private LAN + *.local).
+    process.env.HOST = "0.0.0.0";
     process.env.NODE_ENV = "production";
     process.env.FT_WEB_DIST = join(process.resourcesPath, "web", "dist");
     process.env.FT_DATA_DIR = app.getPath("userData");
