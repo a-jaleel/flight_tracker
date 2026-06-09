@@ -126,8 +126,8 @@ fields:
 
 **Using it somewhere other than the default:** set your location from the control panel's
 **Location** section (or edit `centerLat`/`centerLon`). Stars, sun, moon, and satellites
-are computed for your coordinates automatically. The runway overlay ships with **LGA**
-geometry — turn off **Airport runways** if you've moved, or replace it in
+are computed for your coordinates automatically. The runway overlay ships with **LGA,
+JFK, and EWR** geometry — turn off **Airport runways** if you've moved, or replace it in
 [`web/src/display/airports.ts`](web/src/display/airports.ts) with your local airport
 (coordinates from [OurAirports](https://ourairports.com/data/)).
 
