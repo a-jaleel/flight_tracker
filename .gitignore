@@ -1,0 +1,23 @@
+node_modules/
+dist/
+*.log
+
+# runtime state (persisted config, route + TLE caches)
+server/data/
+data/
+
+# deployment notes with LAN addresses / household-specific details — never commit
+HANDOFF.md
+
+# local scratch
+core.*
+
+# editor / OS
+.DS_Store
+.env
+.env.local
+.idea/
+.vscode/
+
+# local harness state
+.claude/

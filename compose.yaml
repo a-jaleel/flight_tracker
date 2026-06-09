@@ -1,0 +1,25 @@
+# Flight Tracker as a server-driven display.
+#
+#   docker compose up -d --build
+#   open http://<host>:3000/        (display)  ·  /control  (phone panel)
+#
+# Aircraft come from the free airplanes.live cloud API, so it runs with no
+# radio and no other hardware — just outbound internet access.
+
+services:
+  flight-tracker:
+    build: .
+    image: flight-tracker
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Add your own hostname/tunnel if you expose this beyond the LAN:
+      # ALLOWED_HOSTS: flights.example.com
+      TZ: UTC
+    volumes:
+      # Persist config.json + route/TLE caches across restarts.
+      - flight-tracker-data:/app/server/data
+
+volumes:
+  flight-tracker-data:
