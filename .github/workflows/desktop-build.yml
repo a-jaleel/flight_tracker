@@ -1,13 +1,19 @@
 name: Build desktop apps
 
 # Builds the macOS (.dmg/.zip) and Windows (.exe) desktop apps on GitHub's
-# runners and, when you push a version tag (e.g. v0.1.0), attaches them to a
-# GitHub Release you can download. Also runnable on demand from the Actions tab.
+# runners and publishes them to a downloadable GitHub Release.
+# Triggers: pushing a version tag (v*), or running it manually from the Actions
+# tab / API (workflow_dispatch) with a tag name to publish.
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Tag/version to publish (e.g. v0.1.0)"
+        required: true
+        default: "v0.1.0"
 
 permissions:
   contents: write
@@ -50,26 +56,41 @@ jobs:
         env:
           # Unsigned build — don't try to discover a macOS signing identity.
           CSC_IDENTITY_AUTODISCOVERY: "false"
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --publish never
 
-      - name: Upload installers as build artifacts
+      - name: Upload installers
         uses: actions/upload-artifact@v4
         with:
-          name: flight-tracker-${{ matrix.os }}
+          name: installers-${{ matrix.os }}
           path: |
             desktop/release/*.dmg
             desktop/release/*.zip
             desktop/release/*.exe
             desktop/release/*.AppImage
-          if-no-files-found: warn
+          if-no-files-found: error
 
-      - name: Attach installers to the release (on tag)
-        if: startsWith(github.ref, 'refs/tags/')
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all installers
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+          pattern: installers-*
+          merge-multiple: true
+
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            desktop/release/*.dmg
-            desktop/release/*.zip
-            desktop/release/*.exe
-            desktop/release/*.AppImage
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          name: Flight Tracker ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          body: |
+            One-click desktop builds of Flight Tracker.
+
+            - **macOS:** download the `.dmg`, open it, drag the app to Applications.
+            - **Windows:** download and run the `.exe` installer (or the portable `.exe`).
+
+            These builds are **unsigned**, so the first launch shows a one-time prompt:
+            macOS → right-click the app → **Open**; Windows → **More info → Run anyway**.
+          files: dist-artifacts/**
